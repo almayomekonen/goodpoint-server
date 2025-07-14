@@ -2,6 +2,20 @@ import { Role, SpamManagerModule, User } from '@hilma/auth-nest';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+// Helper function to configure SSL properly
+const getSSLConfig = () => {
+    if (process.env.DB_SSL === 'true') {
+        return {
+            rejectUnauthorized: false,
+            // Add additional SSL options if needed
+            // ca: process.env.DB_SSL_CA,
+            // cert: process.env.DB_SSL_CERT,
+            // key: process.env.DB_SSL_KEY,
+        };
+    }
+    return false;
+};
 import { AdminModule } from './admin/admin.module';
 import { AppController } from './app.controller';
 import { ArchivedGoodPointModule } from './archived-good-point/archived-good-point.module';
@@ -72,7 +86,7 @@ import { IdmModule } from './idm/idm.module';
             username: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || 'z10mz10m',
             database: process.env.DB_NAME || 'good_point',
-            ssl: process.env.DB_SSL === 'true',
+            ssl: getSSLConfig(),
             logging: process.env.DB_LOGGING && JSON.parse(process.env.DB_LOGGING),
             synchronize: process.env.DB_SYNCHRONIZE && JSON.parse(process.env.DB_SYNCHRONIZE),
             entities: [

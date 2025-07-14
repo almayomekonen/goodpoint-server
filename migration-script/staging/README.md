@@ -1,0 +1,1 @@
+This should be deleted because the type of the gpText is varchar(255) while the type in prod is varchar(500), this causes all the texts to be dropped . therefore only the prod migration scripts should be used in the future

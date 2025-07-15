@@ -1339,24 +1339,32 @@ export class StaffService extends UserService {
         try {
             this.logger.log(`Validating credentials for username: ${username}`);
 
-            // Find user by username
+            // Find user by username - first get basic user data with password
             this.logger.log(`Looking for user with username: ${username}`);
-            const user = await this.staffRepository.findOne({
+            const basicUser = await this.staffRepository.findOne({
                 where: { username },
-                relations: ['roles', 'schools'],
                 select: ['id', 'username', 'password', 'type', 'firstName', 'lastName'],
             });
-            this.logger.log(`Staff repository query result: ${JSON.stringify(user)}`);
+            this.logger.log(`Basic user query result: ${JSON.stringify(basicUser)}`);
 
-            if (!user) {
+            if (!basicUser) {
                 this.logger.log(`User not found in staff repository: ${username}`);
-                // Try to find in user table directly
-                const userFromUserTable = await this.staffRepository.manager.findOne('user', {
-                    where: { username, type: 'staff' },
-                });
-                this.logger.log(`User table direct query result: ${JSON.stringify(userFromUserTable)}`);
                 return { success: false, error: 'User not found' };
             }
+
+            // Now get the relations separately
+            const userWithRelations = await this.staffRepository.findOne({
+                where: { id: basicUser.id },
+                relations: ['roles', 'schools'],
+            });
+            this.logger.log(`User with relations query result: ${JSON.stringify(userWithRelations)}`);
+
+            // Combine the data
+            const user = {
+                ...basicUser,
+                roles: userWithRelations?.roles || [],
+                schools: userWithRelations?.schools || [],
+            };
 
             this.logger.log(`User found: ${username}, ID: ${user.id}, Type: ${user.type}`);
 

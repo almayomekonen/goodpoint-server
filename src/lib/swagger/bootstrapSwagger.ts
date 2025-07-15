@@ -3,11 +3,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { swaggerCustomOptions, swaggerDocumentOptions } from './configSwagger';
 import metadata from 'src/metadata';
 
-/**
- * Set up Swagger documentation in a Nest.js application.
- * @param {INestApplication} app - The Nest.js application instance.
- * @returns {void}
- */
 export async function bootstrapSwagger(app: INestApplication) {
     // todo- addBearerAuth to make it work
     const options = new DocumentBuilder()

@@ -1,4 +1,4 @@
-import { AccessLoggerModule, UserModule, UserPasswordModule, UserPasswordService } from '@hilma/auth-nest';
+import { AccessLoggerModule, UserModule, UserPasswordService } from '@hilma/auth-nest';
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Staff } from '../entities';
@@ -22,7 +22,6 @@ import { UserPassword } from '@hilma/auth-nest';
 import * as bcrypt from 'bcrypt';
 import { MoreThan } from 'typeorm';
 
-// Custom UserPasswordService that fixes the checkPassword bug
 @Injectable()
 export class FixedUserPasswordService {
     constructor(
@@ -31,9 +30,8 @@ export class FixedUserPasswordService {
     ) {}
 
     async checkPassword(userId: string, password: string): Promise<boolean> {
-        console.log(`[FixedUserPasswordService] Checking password for userId: ${userId}`);
+        console.log(`[FixedUserPasswordService] *** CUSTOM SERVICE CALLED *** Checking password for userId: ${userId}`);
 
-        // First, check if user exists in user table
         const user = (await this.userPasswordRepository.manager.findOne('user', { where: { id: userId } })) as any;
         if (!user) {
             console.log(`[FixedUserPasswordService] User not found in user table: ${userId}`);
@@ -42,7 +40,6 @@ export class FixedUserPasswordService {
 
         console.log(`[FixedUserPasswordService] User found: ${user.username}, type: ${user.type}`);
 
-        // Check if user has password in user table
         if (user.password) {
             console.log(`[FixedUserPasswordService] Found password in user table`);
             const isValid = bcrypt.compareSync(password, user.password);
@@ -50,13 +47,12 @@ export class FixedUserPasswordService {
             return isValid;
         }
 
-        // Fallback to user_password table
         console.log(`[FixedUserPasswordService] Checking user_password table`);
         const userPasswords = await this.userPasswordRepository
             .createQueryBuilder('userPassword')
             .select('userPassword.id')
             .addSelect('userPassword.password')
-            .innerJoin('userPassword.user', 'user', 'user.id = :userId', { userId })
+            .where('userPassword.userId = :userId', { userId })
             .orderBy('userPassword.id', 'DESC')
             .limit(3)
             .getMany();
@@ -98,11 +94,11 @@ export class FixedUserPasswordService {
         TypeOrmModule.forFeature([Staff, UserPassword]),
         UserModule.register({
             set_access_logger: true,
-            useUserPassword: false,
+            useUserPassword: true,
         }),
         UserSchoolModule,
         StarredUserClassesModule,
-        UserPasswordModule,
+        // UserPasswordModule, // Commented out to avoid conflicts with our custom service
         AccessLoggerModule,
         AccessTokenModule,
         MailModule,
@@ -120,7 +116,7 @@ export class FixedUserPasswordService {
             provide: 'USER_MODULE_OPTIONS',
             useValue: {
                 extra_login_fields: ['schoolId'],
-                useUserPassword: false,
+                useUserPassword: true,
             },
         },
         {

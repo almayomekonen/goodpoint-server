@@ -1339,13 +1339,21 @@ export class StaffService extends UserService {
         try {
             this.logger.log(`Validating credentials for username: ${username}`);
 
-            // Find user by username - first get basic user data with password
+            // Find user by username using raw SQL to ensure we get the password
             this.logger.log(`Looking for user with username: ${username}`);
-            const basicUser = await this.staffRepository.findOne({
-                where: { username },
-                select: ['id', 'username', 'password', 'type', 'firstName', 'lastName'],
-            });
-            this.logger.log(`Basic user query result: ${JSON.stringify(basicUser)}`);
+            const rawUser = await this.staffRepository.manager.query(
+                'SELECT id, username, password, type, first_name, last_name FROM user WHERE username = ? AND type = ?',
+                [username, 'staff'],
+            );
+            this.logger.log(`Raw SQL query result: ${JSON.stringify(rawUser)}`);
+
+            if (!rawUser || rawUser.length === 0) {
+                this.logger.log(`User not found with raw query: ${username}`);
+                return { success: false, error: 'User not found' };
+            }
+
+            const basicUser = rawUser[0];
+            this.logger.log(`Basic user from raw query: ${JSON.stringify(basicUser)}`);
 
             if (!basicUser) {
                 this.logger.log(`User not found in staff repository: ${username}`);
@@ -1361,7 +1369,12 @@ export class StaffService extends UserService {
 
             // Combine the data
             const user = {
-                ...basicUser,
+                id: basicUser.id,
+                username: basicUser.username,
+                password: basicUser.password,
+                type: basicUser.type,
+                firstName: basicUser.first_name,
+                lastName: basicUser.last_name,
                 roles: userWithRelations?.roles || [],
                 schools: userWithRelations?.schools || [],
             };

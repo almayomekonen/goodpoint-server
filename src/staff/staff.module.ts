@@ -31,6 +31,27 @@ export class FixedUserPasswordService {
     ) {}
 
     async checkPassword(userId: string, password: string): Promise<boolean> {
+        console.log(`[FixedUserPasswordService] Checking password for userId: ${userId}`);
+
+        // First, check if user exists in user table
+        const user = (await this.userPasswordRepository.manager.findOne('user', { where: { id: userId } })) as any;
+        if (!user) {
+            console.log(`[FixedUserPasswordService] User not found in user table: ${userId}`);
+            return false;
+        }
+
+        console.log(`[FixedUserPasswordService] User found: ${user.username}, type: ${user.type}`);
+
+        // Check if user has password in user table
+        if (user.password) {
+            console.log(`[FixedUserPasswordService] Found password in user table`);
+            const isValid = bcrypt.compareSync(password, user.password);
+            console.log(`[FixedUserPasswordService] Password validation result: ${isValid}`);
+            return isValid;
+        }
+
+        // Fallback to user_password table
+        console.log(`[FixedUserPasswordService] Checking user_password table`);
         const userPasswords = await this.userPasswordRepository
             .createQueryBuilder('userPassword')
             .select('userPassword.id')
@@ -40,12 +61,18 @@ export class FixedUserPasswordService {
             .limit(3)
             .getMany();
 
+        console.log(`[FixedUserPasswordService] Found ${userPasswords.length} passwords in user_password table`);
+
         for (const userPassword of userPasswords) {
-            if (bcrypt.compareSync(password, userPassword.password)) {
-                return true; // Fixed: return true when password matches
+            const isValid = bcrypt.compareSync(password, userPassword.password);
+            console.log(`[FixedUserPasswordService] Password validation result: ${isValid}`);
+            if (isValid) {
+                return true;
             }
         }
-        return false; // Return false when no password matches
+
+        console.log(`[FixedUserPasswordService] No valid password found`);
+        return false;
     }
 
     async changePasswordRequired(userId: string, validityMonths: number): Promise<boolean> {

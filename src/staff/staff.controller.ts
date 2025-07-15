@@ -66,6 +66,8 @@ export class StaffController {
     @UseLocalAuth(Roles.SUPERADMIN, Roles.ADMIN, Roles.TEACHER)
     @Post('/login')
     async login(@RequestUser() userInfo: RequestUserType, @Res() res: Response) {
+        this.logger.log(`Login attempt for user: ${userInfo?.username || 'unknown'}`);
+        this.logger.log(`User info:`, JSON.stringify(userInfo, null, 2));
         const isSA = isSuperAdmin(userInfo.roles);
         //first we find the user's school
         const userSchool = await this.userSchoolService.findUserSchoolIds(userInfo.id);

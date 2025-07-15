@@ -1364,7 +1364,23 @@ export class StaffService extends UserService {
             this.logger.log(`Password from request: ${password}`);
             this.logger.log(`Password exists in DB: ${!!user.password}`);
 
-            const isValidPassword = user.password && bcrypt.compareSync(password, user.password);
+            if (!user.password) {
+                this.logger.log(`No password found in user table for ${username}`);
+                return { success: false, error: 'No password found' };
+            }
+
+            // Test bcrypt comparison with detailed logging
+            this.logger.log(`About to compare password with bcrypt`);
+            const isValidPassword = bcrypt.compareSync(password, user.password);
+            this.logger.log(`bcrypt.compareSync result: ${isValidPassword}`);
+
+            // Also test with async version
+            try {
+                const asyncResult = await bcrypt.compare(password, user.password);
+                this.logger.log(`bcrypt.compare async result: ${asyncResult}`);
+            } catch (bcryptError) {
+                this.logger.error(`bcrypt.compare async error: ${bcryptError}`);
+            }
 
             this.logger.log(`Password validation result: ${isValidPassword}`);
 

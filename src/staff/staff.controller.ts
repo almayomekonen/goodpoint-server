@@ -621,4 +621,40 @@ export class StaffController {
             bcryptVersion: bcrypt.version || 'unknown',
         };
     }
+
+    @Post('debug/test-password-retrieval')
+    async debugTestPasswordRetrieval(@Body() body: { username: string; password: string }) {
+        try {
+            // Get user from database
+            const user = await this.staffService.findUserDirectly(body.username);
+
+            if (!user) {
+                return { success: false, error: 'User not found' };
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const bcrypt = require('bcrypt');
+
+            // Test password comparison
+            const syncResult = bcrypt.compareSync(body.password, user.password);
+            const asyncResult = await bcrypt.compare(body.password, user.password);
+
+            return {
+                message: 'Password retrieval test',
+                username: user.username,
+                hasPassword: !!user.password,
+                passwordLength: user.password?.length || 0,
+                passwordStart: user.password?.substring(0, 15) || 'N/A',
+                inputPassword: body.password,
+                syncResult: syncResult,
+                asyncResult: asyncResult,
+                passwordsMatch: syncResult === asyncResult,
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+            };
+        }
+    }
 }

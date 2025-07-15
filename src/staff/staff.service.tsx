@@ -1344,6 +1344,7 @@ export class StaffService extends UserService {
             const user = await this.staffRepository.findOne({
                 where: { username },
                 relations: ['roles', 'schools'],
+                select: ['id', 'username', 'password', 'type', 'firstName', 'lastName'],
             });
             this.logger.log(`Staff repository query result: ${JSON.stringify(user)}`);
 

@@ -1,4 +1,4 @@
-import { AccessLoggerModule, UserModule, UserPasswordService } from '@hilma/auth-nest';
+import { AccessLoggerModule, UserModule, UserPasswordModule, UserPasswordService } from '@hilma/auth-nest';
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Staff } from '../entities';
@@ -98,7 +98,7 @@ export class FixedUserPasswordService {
         }),
         UserSchoolModule,
         StarredUserClassesModule,
-        // UserPasswordModule, // Commented out to avoid conflicts with our custom service
+        UserPasswordModule,
         AccessLoggerModule,
         AccessTokenModule,
         MailModule,

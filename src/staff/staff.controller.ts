@@ -279,6 +279,54 @@ export class StaffController {
         }
     }
 
+    @Get('debug/direct-user-check/:username')
+    async debugDirectUserCheck(@Param('username') username: string) {
+        try {
+            // Query user directly from database
+            const user = await this.staffService.findUserDirectly(username);
+
+            return {
+                message: 'Direct user check',
+                userFound: !!user,
+                userId: user?.id,
+                username: user?.username,
+                hasPassword: !!user?.password,
+                passwordLength: user?.password?.length || 0,
+                passwordStart: user?.password?.substring(0, 10) || 'N/A',
+                type: user?.type,
+            };
+        } catch (error) {
+            return {
+                message: 'Error in direct user check',
+                error: error.message,
+            };
+        }
+    }
+
+    @Get('debug/raw-password-check/:username')
+    async debugRawPasswordCheck(@Param('username') username: string) {
+        try {
+            // Query user using raw SQL
+            const user = await this.staffService.testRawPasswordQuery(username);
+
+            return {
+                message: 'Raw password check',
+                userFound: !!user,
+                userId: user?.id,
+                username: user?.username,
+                hasPassword: !!user?.password,
+                passwordLength: user?.password?.length || 0,
+                passwordStart: user?.password?.substring(0, 10) || 'N/A',
+                type: user?.type,
+            };
+        } catch (error) {
+            return {
+                message: 'Error in raw password check',
+                error: error.message,
+            };
+        }
+    }
+
     @UseJwtAuth(Roles.ADMIN, Roles.TEACHER)
     @Get('is-first-login')
     isFirstLogin(@RequestUser() currUser: CustomRequestUserType) {
@@ -507,5 +555,37 @@ export class StaffController {
         const buffer = await this.staffService.createAdminTeachersReport(schoolId, body.dates, lang);
         res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.send(buffer);
+    }
+
+    @Post('debug/simple-login')
+    async debugSimpleLogin(@Body() loginDto: { username: string; password: string }, @Res() res: Response) {
+        try {
+            this.logger.log(`Simple login attempt for: ${loginDto.username}`);
+
+            // Validate credentials using our custom method
+            const result = await this.staffService.validateUserCredentials(loginDto.username, loginDto.password);
+
+            if (result.success) {
+                this.logger.log(`Simple login successful for: ${loginDto.username}`);
+                return res.json({
+                    success: true,
+                    message: 'Login successful',
+                    user: result.user,
+                });
+            } else {
+                this.logger.log(`Simple login failed for: ${loginDto.username}, error: ${result.error}`);
+                return res.status(401).json({
+                    success: false,
+                    message: result.error,
+                });
+            }
+        } catch (error) {
+            this.logger.error('Error in simple login:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Internal server error',
+                error: error.message,
+            });
+        }
     }
 }

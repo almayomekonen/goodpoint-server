@@ -1360,6 +1360,10 @@ export class StaffService extends UserService {
             this.logger.log(`User found: ${username}, ID: ${user.id}, Type: ${user.type}`);
 
             // Validate password directly from user table since useUserPassword is false
+            this.logger.log(`Password from DB: ${user.password}`);
+            this.logger.log(`Password from request: ${password}`);
+            this.logger.log(`Password exists in DB: ${!!user.password}`);
+
             const isValidPassword = user.password && bcrypt.compareSync(password, user.password);
 
             this.logger.log(`Password validation result: ${isValidPassword}`);
@@ -1383,6 +1387,32 @@ export class StaffService extends UserService {
         } catch (error) {
             this.logger.error('Error validating user credentials:', error);
             return { success: false, error: 'Internal server error' };
+        }
+    }
+
+    async findUserDirectly(username: string): Promise<any> {
+        try {
+            const user = await this.staffRepository.findOne({
+                where: { username },
+                select: ['id', 'username', 'password', 'type', 'firstName', 'lastName'],
+            });
+            return user;
+        } catch (error) {
+            this.logger.error('Error in findUserDirectly:', error);
+            throw error;
+        }
+    }
+
+    async testRawPasswordQuery(username: string): Promise<any> {
+        try {
+            const result = await this.staffRepository.manager.query(
+                'SELECT id, username, password, type FROM user WHERE username = ? AND type = ?',
+                [username, 'staff'],
+            );
+            return result[0] || null;
+        } catch (error) {
+            this.logger.error('Error in testRawPasswordQuery:', error);
+            throw error;
         }
     }
 }

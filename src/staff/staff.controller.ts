@@ -605,4 +605,20 @@ export class StaffController {
             });
         }
     }
+
+    @Post('debug/generate-hash')
+    async debugGenerateHash(@Body() body: { password: string }) {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const bcrypt = require('bcrypt');
+        const hash = await bcrypt.hash(body.password, 10);
+        const isValid = await bcrypt.compare(body.password, hash);
+
+        return {
+            message: 'Hash generated in production environment',
+            password: body.password,
+            hash: hash,
+            isValid: isValid,
+            bcryptVersion: bcrypt.version || 'unknown',
+        };
+    }
 }

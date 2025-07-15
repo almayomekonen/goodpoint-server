@@ -20,6 +20,9 @@ export class Staff extends User {
         super(basicUser);
     }
 
+    @Column({ type: 'varchar', length: 255, default: 'staff' })
+    type: string;
+
     @Column({ nullable: true, name: 'first_name', type: 'varchar', length: 50 })
     firstName: string;
     @Column({ nullable: true, name: 'last_name', type: 'varchar', length: 50 })

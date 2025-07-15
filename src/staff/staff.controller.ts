@@ -168,6 +168,25 @@ export class StaffController {
         };
     }
 
+    @Get('debug/env-check')
+    async debugEnvCheck() {
+        return {
+            message: 'Environment variables check',
+            nodeEnv: process.env.NODE_ENV,
+            accessTokenName: process.env.ACCESS_TOKEN_NAME,
+            twoFactorTokenCookie: process.env.TWO_FACTOR_TOKEN_COOKIE,
+            secretOrKeyExists: !!process.env.SECRET_OR_KEY,
+            secretOrKeyLength: process.env.SECRET_OR_KEY?.length || 0,
+            dbHost: process.env.DB_HOST,
+            dbName: process.env.DB_NAME,
+            dbSsl: process.env.DB_SSL,
+            dbSync: process.env.DB_SYNCHRONIZE,
+            clientDomain: process.env.CLIENT_DOMAIN,
+            serverDomain: process.env.SERVER_DOMAIN,
+            port: process.env.PORT,
+        };
+    }
+
     // Test endpoint to manually check user authentication
     @Post('/debug/test-login')
     async testLogin(@Body() body: { username: string; password: string }) {

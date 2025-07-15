@@ -7,14 +7,30 @@ import './console-log-obj';
 // Load environment variables based on NODE_ENV
 import { config } from 'dotenv';
 
-const envFile = process.env.NODE_ENV === 'production' ? '.env' : `.env.${process.env.NODE_ENV || 'development'}`;
-
-console.log('Loading environment from:', envFile);
-config({ path: envFile });
+// Only load .env files in development - Railway provides env vars directly
+if (process.env.NODE_ENV !== 'production') {
+    const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
+    console.log('Loading environment from:', envFile);
+    config({ path: envFile });
+} else {
+    console.log('Production mode: Using Railway environment variables');
+}
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
-    app.enableCors({});
+
+    // Configure CORS for production
+    const corsOptions = {
+        origin:
+            process.env.NODE_ENV === 'production'
+                ? ['https://goodpoint-client.vercel.app', process.env.CLIENT_DOMAIN]
+                : true,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    };
+
+    app.enableCors(corsOptions);
     app.useGlobalPipes(new ValidationPipe());
     app.use(cookieParser());
 

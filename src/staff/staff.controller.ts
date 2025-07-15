@@ -191,6 +191,75 @@ export class StaffController {
         }
     }
 
+    // Test endpoint that simulates the login process without authentication guard
+    @Post('/debug/test-login-process')
+    async testLoginProcess(@Body() body: { username: string; password: string }) {
+        this.logger.log(`Testing login process for: ${body.username}`);
+
+        try {
+            // Step 1: Validate credentials
+            const validationResult = await this.staffService.validateUserCredentials(body.username, body.password);
+
+            if (!validationResult.success) {
+                return {
+                    success: false,
+                    error: validationResult.error,
+                    step: 'credential_validation',
+                };
+            }
+
+            const user = validationResult.user.user;
+            this.logger.log(`User validated: ${user.username}, ID: ${user.id}, Type: ${user.type}`);
+
+            // Step 2: Find user's school
+            const userSchool = await this.userSchoolService.findUserSchoolIds(user.id);
+            this.logger.log(`User schools:`, JSON.stringify(userSchool, null, 2));
+
+            if (!userSchool.length) {
+                return {
+                    success: false,
+                    error: 'User has no schools affiliated',
+                    step: 'school_validation',
+                };
+            }
+
+            // Step 3: Check if user is super admin
+            const isSA = user.roles.some((role) => role.name === 'Super Admin');
+            this.logger.log(`Is super admin: ${isSA}`);
+
+            if (!userSchool.length && !isSA) {
+                return {
+                    success: false,
+                    error: 'User has no schools and is not super admin',
+                    step: 'authorization_check',
+                };
+            }
+
+            const { schoolId, roleId } = userSchool[0] || { schoolId: -1, roleId: null };
+            this.logger.log(`Selected school: ${schoolId}, role: ${roleId}`);
+
+            return {
+                success: true,
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    type: user.type,
+                    roles: user.roles,
+                    schoolId: schoolId,
+                    roleId: roleId,
+                },
+                message: 'Login process completed successfully',
+            };
+        } catch (error) {
+            this.logger.error(`Login process failed: ${error.message}`);
+            return {
+                success: false,
+                error: error.message,
+                step: 'exception',
+            };
+        }
+    }
+
     @UseJwtAuth(Roles.ADMIN, Roles.TEACHER)
     @Get('is-first-login')
     isFirstLogin(@RequestUser() currUser: CustomRequestUserType) {

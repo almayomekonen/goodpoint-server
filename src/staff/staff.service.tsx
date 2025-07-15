@@ -155,12 +155,6 @@ export class StaffService extends UserService {
         return firstLogin;
     }
 
-    /**
-     *
-     * @param name the teacher's  lastName and firstName as object
-     * @param schoolId  the teacher's school id
-     * @returns  the teacher with
-     */
     async findTeacherWithSchool(name: Partial<Staff>, schoolId: number) {
         const teacher = await this.staffRepository
             .createQueryBuilder('teacher')
@@ -273,26 +267,7 @@ export class StaffService extends UserService {
         await this.classesService.updateTeacherClasses(schoolId, teacherId, saveTeacherDto.classes);
     }
 
-    /**function for admin to delete a teacher
-     * also deletes related user_schools, preset_messages and removed_preset_messages entities.
-     * also makes teacherId column NULL in classes,good_point and archived_good_points entities
-     *
-     * @param teacherId the teacher to delete
-     * @param adminsSchoolId the admin's school id
-     */
     async deleteTeacher(teacherId: string, adminsSchoolId: number) {
-        //user school has onDelete:cascade
-        //classes has onDelete:SET NULL
-        //good points has onDelete:SET NULL
-        //archived good points has onDelete:SET NULL
-        //preset messages has onDelete:cascade
-        //removed preset messages has onDelete:cascade
-
-        //if teacher was related to only one school -remove that teacher completely
-        //else only remove the relation of the user_school
-
-        //checking if the admin is in the teacher's school
-
         const teachersSchoolIds = (await this.userSchoolService.findUserSchoolIds(teacherId)).map(
             (val) => val.schoolId,
         );
@@ -311,8 +286,6 @@ export class StaffService extends UserService {
 
             this.accessTokenService.removeAccessTokenByUserId(teacherId, adminsSchoolId);
 
-            //then remove completely
-            //deleting from user_password table
             await this.userRepository.manager
                 .createQueryBuilder()
                 .delete()
@@ -327,15 +300,6 @@ export class StaffService extends UserService {
         }
     }
 
-    /**
-     * Soft deletes multiple teachers by removing them from classes, study groups,
-     * and their association with the specified school.
-     *
-     * @param teacherIds - An array of teacher IDs to soft delete.
-     * @param adminsSchoolId - The ID of the school where the admin belongs.
-     * @returns A Promise that resolves when all teachers are soft deleted.
-     * @throws BadRequestException if no teacher IDs are provided.
-     */
     async softDeleteTeachers(teacherIds: string[], adminsSchoolId: number): Promise<void> {
         if (teacherIds.length === 0) {
             throw new BadRequestException('No teacher IDs provided');
@@ -357,10 +321,6 @@ export class StaffService extends UserService {
         }
     }
 
-    /**
-     * Deletes a teacher softly by removing them from classes, study groups,
-     * and their association with the specified school.
-     */
     async deleteTeacherSoft(teacherId: string, adminsSchoolId: number): Promise<void> {
         const teacher = await this.staffRepository.findOne({
             relations: { classes: true, studyGroups: true },
@@ -392,18 +352,12 @@ export class StaffService extends UserService {
         }
     }
 
-    /**
-     * Validates if the admin is in the same school as the teacher.
-     */
     validateAdminSchool(teacherId: string, teacherIdsWithMatchingSchool: string[]): void {
         if (!teacherIdsWithMatchingSchool.includes(teacherId)) {
             throw new UnauthorizedException('Admin is not in the same school as teacher ID: ' + teacherId);
         }
     }
 
-    /**
-     * Checks if a teacher can be deleted.
-     */
     canDeleteTeacher(teacher: Staff, teachersSchoolIds: number[]): boolean {
         return (
             teacher.studentsGoodPoints?.length === 0 &&
@@ -412,9 +366,6 @@ export class StaffService extends UserService {
         );
     }
 
-    /**
-     * Performs the soft delete of a teacher.
-     */
     async performSoftDelete(
         teacherId: string,
         adminsSchoolId: number,
@@ -497,12 +448,6 @@ export class StaffService extends UserService {
         }
     }
 
-    /**
-     *
-     * @param  userId the id of the target user
-     * @param schoolId  the school id of the target user
-     * @returns the context data that is used by the userContext in the client
-     */
     async getContextData(userId: string, schoolId: number) {
         const getQueryForUserData = this.staffRepository
             .createQueryBuilder('user')
@@ -643,12 +588,7 @@ export class StaffService extends UserService {
         return user;
     }
 
-    /**
-     * Uploads a list of teachers from an Excel sheet to the database.
-     * @param sheet An array representing the Excel sheet.
-     * @param schoolId The ID of the school associated with the students.
-     * @returns A Promise that resolves to an array of the newly created teachers.
-     */ async uploadTeachersEXCEL(sheet: ExcelPipeResult<TeachersHeaders>['sheet'], schoolId: number) {
+    async uploadTeachersEXCEL(sheet: ExcelPipeResult<TeachersHeaders>['sheet'], schoolId: number) {
         try {
             let gptTokens = 0;
             const classesSet = new Set<`${SchoolGrades}-${number}`>();
@@ -751,12 +691,6 @@ export class StaffService extends UserService {
         }
     }
 
-    /**
-     * Finds or creates classes based on the set of class identifiers.
-     * @param {Set<`${SchoolGrades}-${number}`>} classIdentifiers - The set of class identifiers.
-     * @param {number} schoolId - The ID of the school associated with the classes.
-     * @returns {Promise<Record<`${SchoolGrades}-${number}`, Classes['id']> | undefined[]>} - The existing and new classes found or created in the database.
-     */
     async findOrCreateClasses(
         classIdentifiers: Set<`${SchoolGrades}-${number}`>,
         schoolId: number,
@@ -775,13 +709,6 @@ export class StaffService extends UserService {
         return foundOrCreatedClasses;
     }
 
-    /**
-     * Process the raw class index and grade values and extract the grade and class index.
-     * @param {string | undefined} rawClassIndex - The raw class index value from the Excel sheet.
-     * @param {string | undefined} rawGrade - The raw grade value from the Excel sheet.
-     * @returns {{ grade: string | null, classIndex: number | null }} - The extracted grade and class index.
-     * @throws {BadRequestException} If the grade or class index is invalid or missing.
-     */
     processGradeAndClass(rawClassIndex: string | undefined, rawGrade: string | undefined) {
         let grade: string | null = null;
         let classIndex: number | null = null;
@@ -808,14 +735,6 @@ export class StaffService extends UserService {
         return { grade, classIndex };
     }
 
-    /**
-     * Process the teachers to insert, update existing teachers, and send emails to new teachers.
-     * @param {DeepPartial<Staff>[]} teachersToInsert - The teachers to insert.
-     * @param {Map<string, { teacherId: string, classes: Classes[], schools: UserSchool[] }>} existingTeachersMap - The map of existing teachers.
-     * @param {number} schoolId - The ID of the school associated with the teachers.
-     * @param {number} foundOrCreatedClasses - he existing and new classes found or created in the database.
-     * @returns { newTeachers: DeepPartial<Staff>[]} - The new teachers and updated teachers.
-     */
     processTeachers(
         teachersToInsert: DeepPartial<Staff>[],
         existingTeachersMap: Map<string, { teacherId: string; classes: Classes[]; schools: UserSchool[] }>,
@@ -879,23 +798,12 @@ export class StaffService extends UserService {
         return newTeachers;
     }
 
-    /**
-     * Adds a password and school id to the teacher object.
-     * @param {DeepPartial<Staff>} teacher - The teacher object to update.
-     * @param {number} schoolId - The ID of the school associated with the teacher.
-     * @returns {DeepPartial<Staff>} The updated teacher object.
-     */
     addNewTeacher(teacher: DeepPartial<Staff>, schoolId: number): DeepPartial<Staff> {
         teacher.schools = [{ schoolId, roleId: RoleIds.TEACHER }];
         teacher.password = Math.random().toString(36).substring(2, 10);
         return teacher;
     }
 
-    /**
-     * Generates an Excel buffer for the newly created teachers.
-     * @param {DeepPartial<Staff>[]} newTeachers - An array of newly created teacher objects.
-     * @returns {Promise<ArrayBuffer|null>} A promise that resolves to an Excel buffer in the form of an ArrayBuffer, or null if no new teachers exist.
-     */
     async generateNewTeachersExcelBuffer(
         newTeachers: DeepPartial<Staff>[],
         lang: Language,
@@ -907,16 +815,6 @@ export class StaffService extends UserService {
         return null;
     }
 
-    /**
-        Sends a password reset email to a teacher.
-        @param {string} email - The email address of the teacher.
-        @param {string} subject - The subject of the email.
-        @param {string} header - The header text of the email.
-        @param {string[]} textContent - An array of text content for the email body.
-        @param {Language} lang - The language of the email.
-        @returns {Promise<void>} A promise that resolves when the email is sent successfully, or rejects with an error.
-        @throws {Error} If an error occurs while sending the email.
-    */
     async sendTeacherPassEmail(
         email: string,
         subject: string,
@@ -993,14 +891,6 @@ export class StaffService extends UserService {
         }
     }
 
-    /**
-     * Saves a teacher with the provided data.
-    @param {SaveTeacherDto} teacherDto - The data of the teacher to be saved.
-    @param {number} schoolId - The ID of the school to which the teacher belongs.
-    @param {Language} lang - The language used for translations.
-    @returns {Promise<{ teacher: Teacher, password: string }>} An object containing the saved teacher and the generated password, if applicable.
-    @throws {BadRequestException} If the user is not found.
-    */
     async saveTeacher(teacherDto: SaveTeacherDto, schoolId: number, lang: Language) {
         const { password } = await this.saveUser(
             {
@@ -1041,13 +931,6 @@ export class StaffService extends UserService {
         }
     }
 
-    /**
-     * Saves a admin with the provided data.
-    @param {AddAdminDto} body - The data of the admin to be saved.
-    @param {Language} lang - The language used for translations.
-    @returns {Promise<{ user: staff, password: string }>} An object containing the saved teacher and the generated password, if applicable.
-    @throws {BadRequestException} If the user is not found.
-    */
     async saveAdmin(body: AddAdminDto, lang: Language): Promise<{ password: string; user: Staff }> {
         const url = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : process.env.SERVER_DOMAIN;
 
@@ -1083,15 +966,6 @@ export class StaffService extends UserService {
         }
     }
 
-    /**
-     * Saves a user with the provided data, and associates them with a school and role.
-    @param {Partial<Staff>} teacherDto - The data of the user to be saved.
-    @param {number} schoolId - The ID of the school to which the user belongs.
-    @param {RoleIds} roleId - The ID of the role of the user.
-    @returns {Promise<{ password: string, user: Staff }>} An object containing the generated password (if applicable) and the saved user.
-    @throws {ConflictException} If the user already exists at the school.
-    @throws {Error} If there is an error saving the user.
-    */
     async saveUser(
         teacherDto: Partial<Staff>,
         schoolId: number,
@@ -1114,8 +988,6 @@ export class StaffService extends UserService {
             });
 
             if (user) {
-                //check if the user was already an admin at that school
-                //admin role is 2
                 const isAdminAlready = user.schools?.find(
                     (school) => school.schoolId === schoolId && school.roleId == RoleIds.ADMIN,
                 );
@@ -1124,9 +996,6 @@ export class StaffService extends UserService {
                     throw new ConflictException('user already admin at this school');
                 }
 
-                /**
-                 * if the new user is a teacher , check if the user is already a teacher at the school
-                 */
                 if (
                     roleId == RoleIds.TEACHER &&
                     user.schools.some((school) => school.schoolId == schoolId && school.roleId == RoleIds.TEACHER)
@@ -1168,13 +1037,6 @@ export class StaffService extends UserService {
         }
     }
 
-    /**
-     *
-     * @method create translated object for xlsx table
-     * @param {Staff[]} data - query result
-     * @param {Language} lang - user lang for translation
-     * Intended for exporting a teacher's good points report
-     */
     formatReportData(data: Staff, lang: Language) {
         const formattedData: object[] = [];
         const labels = translations[lang].ExportReportTableTranslation;
@@ -1191,13 +1053,7 @@ export class StaffService extends UserService {
         });
         return formattedData;
     }
-    /**
-     *
-     * @method create translated object for xlsx table
-     * @param {Staff[]} data - query result
-     * @param {Language} lang - user lang for translation
-     * Intended for exporting a table with the passwords of the teachers added to the system
-     */
+
     formatExcelTeacherData(data: DeepPartial<Staff>[], lang: Language) {
         const formattedData: object[] = [];
         const translation = getTranslations(lang);
@@ -1212,13 +1068,6 @@ export class StaffService extends UserService {
         return formattedData;
     }
 
-    /**
-     * 
-    The function in staff service and not in goodPoint service
-    because the need to bring the teacher and all his good points,
-    and not to bring every good point with the teacher who sent it
-     *
-     */
     async getGPsByTeacher(schoolId: number, teacherId: string, dates?: { from: string; to: string }) {
         const where: FindOptionsWhere<Staff> = {
             schools: [{ schoolId }],
@@ -1263,10 +1112,6 @@ export class StaffService extends UserService {
         return teacherGPData;
     }
 
-    /**
-     * The function creates a report of the good points that a specific teacher sent in a specific period.
-     */
-
     async createTeacherReportXlsx(
         schoolId: number,
         teacherId: string,
@@ -1279,13 +1124,6 @@ export class StaffService extends UserService {
         return createXlsxBuffer(formattedData, lang, [20, 20, 20, 20, 80]);
     }
 
-    /** Creates an xlsx buffer for the admin's teachers report
-     *
-     * @param schoolId
-     * @param date
-     * @param lang
-     * @returns
-     */
     async createAdminTeachersReport(schoolId: number, date: { from: string; to: string }, lang: Language) {
         const data = await this.staffRepository
             .createQueryBuilder('teacher')
@@ -1316,12 +1154,6 @@ export class StaffService extends UserService {
         return createXlsxBuffer(formattedData, lang, [20, 20]);
     }
 
-    /**
-     * @returns school's teachers that are assigned to classes and their classes.
-     *
-     * *Used for monthly email for home teachers*
-     */
-
     private async getSchoolHomeTeachers(schoolId: number) {
         return this.staffRepository.find({
             where: {
@@ -1343,9 +1175,6 @@ export class StaffService extends UserService {
         });
     }
 
-    /**
-     * Send on the 25th of every month an email to all home teachers that have students in their class that didn't receive any good-point this month.
-     */
     @Cron('0 0 03 25 * *', { name: 'MonthlyGPS' })
     async sendHomeTeacherMonthlyEmail() {
         if (process.env.SEND_MONTHLY_EMAIL !== 'true') {

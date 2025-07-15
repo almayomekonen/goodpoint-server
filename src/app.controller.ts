@@ -14,9 +14,6 @@ export class AppController {
 
     constructor(private readonly spamManager: SpamManagerService) {}
 
-    /**
-     * Crucial for the production server to be able to rebuild after a successful pipeline
-     */
     @Get('/health')
     getHello(): string {
         return 'OK';

@@ -31,15 +31,6 @@ export class Staff extends User {
     @Column({ type: 'varchar', length: 14, name: 'phone_number', nullable: false, default: '' })
     phoneNumber: string;
 
-    /**
-     * Good points that are sent from a teacher to a teacher are not sent in sms -
-     * they are visible to the receiver-teacher in the app.
-     * We save `isRead` for each teacher-good-point, and with a Cron service
-     * (3 times a day: server/src/teachers-good-points/teachers-good-points.service.ts:85),
-     * if a teacher hasn't read a gp that was sent to him - we send an sms notifying about the gp he didn't yet read.
-     *
-     * But to prevent spamming the teacher with tons of reminders *every* cron job, we remember the previous reminder date
-     */
     @Index()
     @Column({ name: 'notify_date', nullable: true, type: 'datetime', default: null })
     notifyDate: Date;
@@ -72,18 +63,11 @@ export class Staff extends User {
     @OneToMany(() => Classes, (classes) => classes.teacher)
     classes: Classes[];
 
-    // @OneToMany(() => File, (files) => files.owner)
-    // files: File[];
-
     @OneToMany(() => ArchivedGoodPoint, (archivedGoodPoints) => archivedGoodPoints.teacher)
     archivedGoodPoints: ArchivedGoodPoint[];
 
     @OneToMany(() => RemovedPresetMessages, (removedPresetMessages) => removedPresetMessages.teacher)
     removedPresetMessages: RemovedPresetMessages[];
-
-    // @ManyToMany(() => Classes, classes => classes.id)
-    // @JoinTable({ name: "teacher_classes" })
-    // classesId: Classes[]
 
     @OneToMany(() => StarredUserClasses, (classes) => classes.user, { onUpdate: 'CASCADE' })
     starredUserClasses: StarredUserClasses[];

@@ -41,20 +41,10 @@ export class GoodPointService {
         );
     }
 
-    /**
-     *
-     * @param manager Transaction manager. This function runs only with transaction and as a part of new-year process.
-     */
     async deleteAllGoodPoints(manager: EntityManager) {
         return manager.getRepository(GoodPoint).delete({});
     }
 
-    /**
-     *
-     * @param schoolId The id of the school in which the student is in
-     * @param studentId  The id of the student
-     * @returns  The gps that the student received in that school
-     */
     async getStudentGps(schoolId: number, studentId: number) {
         const results = await this.goodPointRepository.find({
             relations: {
@@ -92,11 +82,6 @@ export class GoodPointService {
         return results;
     }
 
-    /**
-     * @param schoolId The id of the school in which the teacher is in
-     * @param teacherId  The id of the teacher
-     * @returns  The gps that the teacher gave in that school
-     * */
     async getTeacherGps(schoolId: number, teacherId: string) {
         return await this.goodPointRepository.find({
             select: {
@@ -131,14 +116,6 @@ export class GoodPointService {
         });
     }
 
-    /**
-     *
-     * @param schoolId The id of the school in which the student is in
-     * @param studentId  The id of the student
-     * @param currUserId  The id of the user that is requesting the data
-     * @param page  The page number- used to calculate the offset for the infinite query
-     * @returns  The gps that the student received in that school
-     */
     async goodPointsByStudentId(studentId: number, schoolId: number, currUserId: string, page: number) {
         const data = await this.goodPointRepository
             .createQueryBuilder('good_point')
@@ -162,15 +139,6 @@ export class GoodPointService {
         return data;
     }
 
-    /**This function sends a 'group' gp to a group of students , meaning the same gp is sent to all of the selected students
-     *
-     * @param studentIds The ids of the students that are receiving the gp
-     * @param teacherId  The id of the teacher that is sending the gp
-     * @param schoolId  The id of the school in which the teacher is in
-     * @param gpText  The content of the gp
-     * @param lang   The language of the gp
-     * @returns
-     */
     async sendGroupGp(studentIds: number[], teacherId: string, schoolId: number, gpText: string, lang: Language) {
         const gps = await Promise.all(
             studentIds.map((studentId) => {
@@ -180,14 +148,6 @@ export class GoodPointService {
         return gps;
     }
 
-    /**This function saves a good point in the database
-     *
-     * @param teacherId The id of the teacher that is sending the gp
-     * @param schoolId  The id of the school in which the teacher is in
-     * @param studentId  The id of the student
-     * @param gpText  The content of the gp
-     * @returns The newly created gp
-     */
     async saveGoodPoint(teacherId: string, schoolId: number, studentId: number, gpText: string) {
         let saved = false;
         while (!saved) {
@@ -209,21 +169,10 @@ export class GoodPointService {
                     throw new Error(e);
                 }
                 console.log("can't save good point");
-
-                //As long as there is an error(the linkHash not unieq), the loop runs.
             }
         }
     }
 
-    /** This function saves a new gp and updates the student's gp count and also sends a push notification to the student
-     * @param teacherId The id of the teacher that is sending the gp
-     * @param schoolId  The id of the school in which the student is in
-     * @param studentId  The id of the student
-     * @param gpText    The text of the gp
-     * @param lang  The language of the gp
-     * @param openSentenceId  The id of the open sentence(preset message) that the gp is related to
-     * @returns The newly created gp
-     */
     async sendGoodPoint(
         teacherId: string,
         schoolId: number,
@@ -296,14 +245,6 @@ export class GoodPointService {
         return goodPoint;
     }
 
-    /**This function gets the gps that a teacher sent in a specific school
-     *
-     * @param teacherId The id of the teacher that sent the gps
-     * @param schoolId  The id of the school to get the teacher's gps from
-     * @param pageNumber Used for pagination , determines how many gps have been requested so far
-     * @param perPage  Used for pagination, determines how many to get each request
-     * @returns  The gps that the teacher sent in the school
-     */
     async getTeacherSentGps(teacherId: string, schoolId: number, pageNumber: number, perPage: number) {
         const gps = await this.goodPointRepository.find({
             relations: {
@@ -344,10 +285,6 @@ export class GoodPointService {
         return gps;
     }
 
-    /**
-     * @param link The link of the gp
-     * @returns The gp that has the given link
-     */
     async getGpByLink(link: string) {
         //update the view count of the gp
 
@@ -406,13 +343,6 @@ export class GoodPointService {
         return gp;
     }
 
-    /**
-     *
-     * @param ids The ids of the gps to delete
-     * @param studentId The id of the student that received the gps
-     * @returns The number of gps that were deleted
-     * @throw Error if no gps to delete were found
-     */
     async DeleteGoodPointsById(ids: string[], studentId: number): Promise<number> {
         try {
             const result = await this.goodPointRepository.delete({
@@ -435,12 +365,6 @@ export class GoodPointService {
         }
     }
 
-    /**
-     * This function deletes all the gps by id that a student received except for the ones that are in the ids array
-     * @param ids The id of the gps NOT to delete
-     * @param studentId the id of the student that received the gps
-     * @returns  The number of gps that were deleted
-     */
     async deleteGoodPointsExceptById(ids: string[], studentId: number): Promise<number> {
         try {
             const result = await this.goodPointRepository.delete({
@@ -457,11 +381,6 @@ export class GoodPointService {
         }
     }
 
-    /**
-     *
-     * @param schoolId The id of the school to get the gps from
-     * @returns True if the school has gps , false otherwise
-     */
     async doesSchoolHaveGp(schoolId: number): Promise<boolean> {
         const result = await this.goodPointRepository.findOne({
             where: {
@@ -471,11 +390,6 @@ export class GoodPointService {
         return !!result;
     }
 
-    /**
-     *
-     * @param schoolId The id of the school to get the gps from
-     * @returns The number of gps that the school has
-     */
     async getGpCountBySchool(schoolId: number) {
         return this.goodPointRepository.count({ where: { schoolId } });
     }

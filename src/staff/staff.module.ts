@@ -19,7 +19,10 @@ import { AccessTokenModule } from 'src/access-token/access-token.module';
 @Module({
     imports: [
         TypeOrmModule.forFeature([Staff]),
-        UserModule.register({ set_access_logger: true }),
+        UserModule.register({
+            set_access_logger: true,
+            useUserPassword: true,
+        }),
         UserSchoolModule,
         StarredUserClassesModule,
         UserPasswordModule,
@@ -38,7 +41,10 @@ import { AccessTokenModule } from 'src/access-token/access-token.module';
         StaffService,
         {
             provide: 'USER_MODULE_OPTIONS',
-            useValue: { extra_login_fields: ['schoolId'] },
+            useValue: {
+                extra_login_fields: ['schoolId'],
+                useUserPassword: true,
+            },
         },
         JwtService,
     ],

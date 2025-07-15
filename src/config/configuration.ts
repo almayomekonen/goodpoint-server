@@ -6,7 +6,7 @@ export default (): AuthConfig => ({
         twoFactorToken_cookie: process.env.TWO_FACTOR_TOKEN_COOKIE,
         secretOrKey: process.env.SECRET_OR_KEY,
         allow_accessToken_query: true,
-        ttl: { staff: 15552000 }, //half year in seconds
+        ttl: { staff: 15552000 },
         access_logger: {
             enable: true,
             tries: 5,

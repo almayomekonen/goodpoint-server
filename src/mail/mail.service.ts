@@ -41,19 +41,6 @@ export class MailService {
         return this.transporter.sendMail(newData);
     }
 
-    /**
-     * @param data fields:
-     * --------------
-     * @param {string} from- title in the mail
-     * @param {string} to- addressee email address
-     * @param {string} html- Email structure and content
-     * @param {string?} text
-     * @param {string} subject
-     * @param {Array<any>?} attachments- any files you wish to send
-     * -------------
-     * @param {Function}  cb - callback, NOT IN USE JUST PASS NULL
-     * @param {boolean} isSpam- use spam manager to handle spam.
-     */
     async send(
         data: {
             from: string;
@@ -86,13 +73,6 @@ export class MailService {
         return this.sendEmail({ ...data, from: data.from || process.env.MAIL_USER } as unknown as EmailData, isSpam);
     }
 
-    /**
-     * @method create massage in uniform format
-     * @param {Array<string> | string} content- each index in the array will create a new line with its content | You can also pass HTML string.
-     * @param {string} headline
-     * @param {boolean} isSpam Add spam removal link in the bottom of this email.
-     * @returns {string} html string for email content
-     */
     createHtmlMessage(content: ReactElement | string[] | string, headline: string, emailForSpam = '', lang: Language) {
         return render(CreateEmail({ content, headline, emailForSpam, imageDomain: this.url, lang }));
     }

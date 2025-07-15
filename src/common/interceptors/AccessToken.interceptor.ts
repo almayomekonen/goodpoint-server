@@ -11,10 +11,6 @@ import {
 import { Observable } from 'rxjs';
 import { AccessTokenService } from 'src/access-token/access-token.service';
 
-/**
- * Intercepts incoming requests and validates the jwt token from the access token tables.
- * @returns a interceptor guard
- */
 @Injectable()
 export class AccessTokenInterceptor implements NestInterceptor {
     private readonly logger = new Logger(AccessTokenInterceptor.name);
@@ -26,6 +22,11 @@ export class AccessTokenInterceptor implements NestInterceptor {
 
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
         const request = context.switchToHttp().getRequest();
+
+        // Skip token validation for login route
+        if (request.path === '/api/staff/login') {
+            return next.handle();
+        }
 
         const accessTokenFetcher = extractTokenFromCookie(process.env.ACCESS_TOKEN_NAME, false);
 

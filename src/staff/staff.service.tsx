@@ -1339,13 +1339,20 @@ export class StaffService extends UserService {
             this.logger.log(`Validating credentials for username: ${username}`);
 
             // Find user by username
+            this.logger.log(`Looking for user with username: ${username}`);
             const user = await this.staffRepository.findOne({
                 where: { username },
                 relations: ['roles', 'schools'],
             });
+            this.logger.log(`Staff repository query result: ${JSON.stringify(user)}`);
 
             if (!user) {
-                this.logger.log(`User not found: ${username}`);
+                this.logger.log(`User not found in staff repository: ${username}`);
+                // Try to find in user table directly
+                const userFromUserTable = await this.staffRepository.manager.findOne('user', {
+                    where: { username, type: 'staff' },
+                });
+                this.logger.log(`User table direct query result: ${JSON.stringify(userFromUserTable)}`);
                 return { success: false, error: 'User not found' };
             }
 

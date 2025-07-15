@@ -154,6 +154,41 @@ export class StaffController {
         return name;
     }
 
+    // Debug endpoint - no authentication required
+    @Get('/debug/auth-test')
+    async debugAuthTest() {
+        this.logger.log('Debug auth test endpoint called');
+        return {
+            message: 'Debug endpoint working',
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV,
+            accessTokenName: process.env.ACCESS_TOKEN_NAME,
+        };
+    }
+
+    // Test endpoint to manually check user authentication
+    @Post('/debug/test-login')
+    async testLogin(@Body() body: { username: string; password: string }) {
+        this.logger.log(`Manual login test for: ${body.username}`);
+
+        try {
+            // This will help us see if the user exists and password validation works
+            const result = await this.staffService.validateUserCredentials(body.username, body.password);
+            return {
+                success: true,
+                user: result,
+                message: 'Login validation successful',
+            };
+        } catch (error) {
+            this.logger.error(`Login validation failed: ${error.message}`);
+            return {
+                success: false,
+                error: error.message,
+                message: 'Login validation failed',
+            };
+        }
+    }
+
     @UseJwtAuth(Roles.ADMIN, Roles.TEACHER)
     @Get('is-first-login')
     isFirstLogin(@RequestUser() currUser: CustomRequestUserType) {

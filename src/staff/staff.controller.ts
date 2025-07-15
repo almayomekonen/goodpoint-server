@@ -1,4 +1,4 @@
-import { RequestUser, RequestUserType, UseJwtAuth, UseLocalAuth, extractTokenFromCookie } from '@hilma/auth-nest';
+import { RequestUser, RequestUserType, UseJwtAuth, extractTokenFromCookie } from '@hilma/auth-nest';
 import {
     Body,
     Controller,
@@ -63,41 +63,58 @@ export class StaffController {
         private readonly accessTokenService: AccessTokenService,
     ) {}
 
-    @UseLocalAuth(Roles.SUPERADMIN, Roles.ADMIN, Roles.TEACHER)
     @Post('/login')
-    async login(@RequestUser() userInfo: RequestUserType, @Res() res: Response) {
-        this.logger.log(`Login attempt for user: ${userInfo?.username || 'unknown'}`);
-        this.logger.log(`User info:`, JSON.stringify(userInfo, null, 2));
-        this.logger.log(`User roles:`, JSON.stringify(userInfo?.roles, null, 2));
-        this.logger.log(`User type:`, userInfo?.type);
-        const isSA = isSuperAdmin(userInfo.roles);
-        //first we find the user's school
-        const userSchool = await this.userSchoolService.findUserSchoolIds(userInfo.id);
+    async login(@Body() loginDto: { username: string; password: string }, @Res() res: Response) {
+        try {
+            this.logger.log(`Login attempt for user: ${loginDto.username}`);
 
-        //if user is not super admin and has no schools , he's not authorized
-        if (!userSchool.length && !isSA) {
-            throw new UnauthorizedException({
-                key: 'NoUserSchools',
-                code: 403,
-                message: 'User has no schools affiliated with him',
-            });
+            // Validate credentials using our custom method
+            const result = await this.staffService.validateUserCredentials(loginDto.username, loginDto.password);
+
+            if (!result.success) {
+                this.logger.log(`Login failed for: ${loginDto.username}, error: ${result.error}`);
+                throw new UnauthorizedException({
+                    key: 'InvalidCredentials',
+                    code: 401,
+                    message: result.error || 'Invalid credentials',
+                });
+            }
+
+            const userInfo = result.user;
+            this.logger.log(`Login successful for user: ${userInfo.username}`);
+
+            const isSA = isSuperAdmin(userInfo.roles);
+            //first we find the user's school
+            const userSchool = await this.userSchoolService.findUserSchoolIds(userInfo.id);
+
+            //if user is not super admin and has no schools , he's not authorized
+            if (!userSchool.length && !isSA) {
+                throw new UnauthorizedException({
+                    key: 'NoUserSchools',
+                    code: 403,
+                    message: 'User has no schools affiliated with him',
+                });
+            }
+            const { schoolId, roleId } = userSchool[0] || { schoolId: -1, roleId: null };
+            const role = Object.keys(RoleIds).find((key) => RoleIds[key] === roleId);
+
+            const body = this.staffService.login(
+                {
+                    id: userInfo.id,
+                    type: userInfo.type,
+                    username: userInfo.username,
+                    roles: role ? [role] : userInfo.roles,
+                    roleKeys: [],
+                    schoolId: schoolId ? schoolId : undefined,
+                } as RequestUserType,
+                res,
+            );
+            await this.accessTokenService.saveAccessToken(body[process.env.ACCESS_TOKEN_NAME], body.id, schoolId);
+            res.send(body);
+        } catch (error) {
+            this.logger.error('Login error:', error);
+            throw error;
         }
-        const { schoolId, roleId } = userSchool[0] || { schoolId: -1, roleId: null };
-        const role = Object.keys(RoleIds).find((key) => RoleIds[key] === roleId);
-
-        const body = this.staffService.login(
-            {
-                id: userInfo.id,
-                type: userInfo.type,
-                username: userInfo.username,
-                roles: role ? [role] : userInfo.roles,
-                roleKeys: [],
-                schoolId: schoolId ? schoolId : undefined,
-            } as RequestUserType,
-            res,
-        );
-        await this.accessTokenService.saveAccessToken(body[process.env.ACCESS_TOKEN_NAME], body.id, schoolId);
-        res.send(body);
     }
 
     @UseJwtAuth(Roles.SUPERADMIN, Roles.ADMIN, Roles.TEACHER)

@@ -68,7 +68,7 @@ export class FixedUserPasswordService {
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Staff]),
+        TypeOrmModule.forFeature([Staff, UserPassword]),
         UserModule.register({
             set_access_logger: true,
             useUserPassword: true,

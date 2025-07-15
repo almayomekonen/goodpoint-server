@@ -1336,6 +1336,8 @@ export class StaffService extends UserService {
         password: string,
     ): Promise<{ success: boolean; user?: any; error?: string }> {
         try {
+            this.logger.log(`Validating credentials for username: ${username}`);
+
             // Find user by username
             const user = await this.staffRepository.findOne({
                 where: { username },
@@ -1343,11 +1345,16 @@ export class StaffService extends UserService {
             });
 
             if (!user) {
+                this.logger.log(`User not found: ${username}`);
                 return { success: false, error: 'User not found' };
             }
 
+            this.logger.log(`User found: ${username}, ID: ${user.id}, Type: ${user.type}`);
+
             // Validate password using the userPasswordService
             const isValidPassword = await this.userPasswordService.checkPassword(user.id, password);
+
+            this.logger.log(`Password validation result: ${isValidPassword}`);
 
             if (!isValidPassword) {
                 return { success: false, error: 'Invalid password' };
@@ -1360,6 +1367,7 @@ export class StaffService extends UserService {
                     username: user.username,
                     firstName: user.firstName,
                     lastName: user.lastName,
+                    type: user.type,
                     roles: user.roles,
                     schools: user.schools,
                 },

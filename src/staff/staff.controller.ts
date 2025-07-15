@@ -68,6 +68,8 @@ export class StaffController {
     async login(@RequestUser() userInfo: RequestUserType, @Res() res: Response) {
         this.logger.log(`Login attempt for user: ${userInfo?.username || 'unknown'}`);
         this.logger.log(`User info:`, JSON.stringify(userInfo, null, 2));
+        this.logger.log(`User roles:`, JSON.stringify(userInfo?.roles, null, 2));
+        this.logger.log(`User type:`, userInfo?.type);
         const isSA = isSuperAdmin(userInfo.roles);
         //first we find the user's school
         const userSchool = await this.userSchoolService.findUserSchoolIds(userInfo.id);

@@ -26,6 +26,7 @@ import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Container, Link, Text } from '@react-email/components';
 import { Response } from 'express';
+import * as bcrypt from 'bcrypt';
 import { AccessTokenService } from 'src/access-token/access-token.service';
 import { ClassesService } from 'src/classes/classes.service';
 import { StarredActions } from 'src/common/consts/starredActions';
@@ -1358,8 +1359,8 @@ export class StaffService extends UserService {
 
             this.logger.log(`User found: ${username}, ID: ${user.id}, Type: ${user.type}`);
 
-            // Validate password using the userPasswordService
-            const isValidPassword = await this.userPasswordService.checkPassword(user.id, password);
+            // Validate password directly from user table since useUserPassword is false
+            const isValidPassword = user.password && bcrypt.compareSync(password, user.password);
 
             this.logger.log(`Password validation result: ${isValidPassword}`);
 

@@ -27,7 +27,9 @@ export class FixedUserPasswordService {
     constructor(
         @InjectRepository(UserPassword)
         private userPasswordRepository: Repository<UserPassword>,
-    ) {}
+    ) {
+        console.log('[FixedUserPasswordService] Constructor called - service is being instantiated');
+    }
 
     async checkPassword(userId: string, password: string): Promise<boolean> {
         console.log(`[FixedUserPasswordService] *** CUSTOM SERVICE CALLED *** Checking password for userId: ${userId}`);
@@ -94,7 +96,7 @@ export class FixedUserPasswordService {
         TypeOrmModule.forFeature([Staff, UserPassword]),
         UserModule.register({
             set_access_logger: true,
-            useUserPassword: true,
+            useUserPassword: false,
         }),
         UserSchoolModule,
         StarredUserClassesModule,
@@ -116,14 +118,15 @@ export class FixedUserPasswordService {
             provide: 'USER_MODULE_OPTIONS',
             useValue: {
                 extra_login_fields: ['schoolId'],
-                useUserPassword: true,
+                useUserPassword: false,
             },
         },
+        JwtService,
+        // This must be last to override the UserPasswordModule's provider
         {
             provide: UserPasswordService,
             useClass: FixedUserPasswordService,
         },
-        JwtService,
     ],
     exports: [StaffService, UserModule],
 })

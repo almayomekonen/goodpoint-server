@@ -1330,4 +1330,43 @@ export class StaffService extends UserService {
             res.redirect(process.env.CLIENT_DOMAIN);
         }
     }
+
+    async validateUserCredentials(
+        username: string,
+        password: string,
+    ): Promise<{ success: boolean; user?: any; error?: string }> {
+        try {
+            // Find user by username
+            const user = await this.staffRepository.findOne({
+                where: { username },
+                relations: ['roles', 'schools'],
+            });
+
+            if (!user) {
+                return { success: false, error: 'User not found' };
+            }
+
+            // Validate password using the userPasswordService
+            const isValidPassword = await this.userPasswordService.checkPassword(user.id, password);
+
+            if (!isValidPassword) {
+                return { success: false, error: 'Invalid password' };
+            }
+
+            return {
+                success: true,
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    roles: user.roles,
+                    schools: user.schools,
+                },
+            };
+        } catch (error) {
+            this.logger.error('Error validating user credentials:', error);
+            return { success: false, error: 'Internal server error' };
+        }
+    }
 }

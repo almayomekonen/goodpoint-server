@@ -1,0 +1,5 @@
+export const ADMIN_FETCH_LIMIT = 10;
+export const STUDENTS_FETCH_LIMIT = 50;
+export const GOOD_POINTS_FETCH_LIMIT = 10;
+export const ADMIN_CLASSES_FETCH_LIMIT_SERVER = 10;
+export const ADMIN_POINTS_FETCH_LIMIT_SERVER = 10;

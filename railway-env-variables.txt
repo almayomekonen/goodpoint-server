@@ -1,0 +1,54 @@
+# ========================================
+# RAILWAY SERVER ENVIRONMENT VARIABLES
+# ========================================
+
+# Authentication Configuration
+ACCESS_TOKEN_NAME=access_token
+TWO_FACTOR_TOKEN_COOKIE=two_factor_token
+SECRET_OR_KEY=70f4c2ef4f56230e4b689ae7b72497d1107a4efafaa7140b207142c59a8955b7
+
+# Firebase Configuration
+FIREBASE_PROJECT_ID=goodpoint-37525
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_ACTUAL_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@goodpoint-37525.iam.gserviceaccount.com
+FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json
+
+# Authentication Settings
+TOKEN_EXPIRATION=3600
+REFRESH_TOKEN_EXPIRATION=604800
+ENABLE_TOKEN_CACHING=true
+CACHE_EXPIRATION=300
+RATE_LIMIT_WINDOW=900000
+RATE_LIMIT_MAX=100
+
+# Database Configuration (Railway will provide these)
+DB_HOST=${DATABASE_HOST}
+DB_PORT=3306
+DB_USER=${DATABASE_USERNAME}
+DB_PASSWORD=${DATABASE_PASSWORD}
+DB_NAME=${DATABASE_NAME}
+DB_SSL=true
+
+# Application Configuration
+NODE_ENV=production
+PORT=8080
+
+# Database Options
+DB_LOGGING=false
+DB_SYNCHRONIZE=false
+
+# Server Configuration
+SERVER_DOMAIN=https://your-server-railway-url.up.railway.app
+CLIENT_DOMAIN=https://your-client-railway-url.up.railway.app
+
+# Email Configuration (optional)
+MAIL_USER=your-email@example.com
+MAIL_PASSWORD=your-email-password
+SEND_EMAIL=false
+
+# SMS Configuration (optional)
+SEND_SMS=false
+
+# Other Configuration
+phone_shuffle=8,7,2,0,1,9,5,6,3,4
+SEND_MONTHLY_EMAIL=false 

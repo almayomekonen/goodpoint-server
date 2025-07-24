@@ -39,6 +39,12 @@ export class FirebaseAuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
 
+        // 🔧 CRITICAL FIX: Always allow OPTIONS requests for CORS preflight
+        if (request.method === 'OPTIONS') {
+            console.log(`🔄 FirebaseAuthGuard: Allowing OPTIONS request for CORS preflight`);
+            return true;
+        }
+
         // Check if authentication should be skipped
         const skipAuth = this.reflector.getAllAndOverride<boolean>(SKIP_AUTH_KEY, [
             context.getHandler(),

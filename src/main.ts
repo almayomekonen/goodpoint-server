@@ -4,10 +4,8 @@ import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import './console-log-obj';
 
-// Load environment variables based on NODE_ENV
 import { config } from 'dotenv';
 
-// Only load .env files in development - Railway provides env vars directly
 if (process.env.NODE_ENV !== 'production') {
     const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
     console.log('Loading environment from:', envFile);
@@ -19,22 +17,40 @@ if (process.env.NODE_ENV !== 'production') {
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
-    const allowedOrigins = ['https://goodpoint-client-production.up.railway.app', process.env.CLIENT_DOMAIN];
+    const baseOrigin = 'https://goodpoint-client-production.up.railway.app';
+    const allowedOrigins = [baseOrigin, process.env.CLIENT_DOMAIN].filter(Boolean);
+
+    console.log('🌍 CORS Configuration:');
+    console.log('- Allowed origins:', allowedOrigins);
+    console.log('- CLIENT_DOMAIN env var:', process.env.CLIENT_DOMAIN);
 
     const corsOptions = {
         origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-            // Allow requests with no origin (like mobile apps, curl, etc.)
-            if (!origin) return callback(null, true);
-            if (allowedOrigins.includes(origin)) {
+            console.log(`🔍 CORS request from origin: "${origin}"`);
+            console.log(`🔍 Allowed origins: ${JSON.stringify(allowedOrigins)}`);
+
+            if (!origin) {
+                console.log('✅ CORS: Allowing request with no origin');
                 return callback(null, true);
             }
-            return callback(new Error('Not allowed by CORS'), false);
+
+            if (allowedOrigins.includes(origin)) {
+                console.log('✅ CORS: Origin allowed');
+                return callback(null, true);
+            }
+
+            console.log('❌ CORS: Origin blocked');
+            return callback(new Error(`Not allowed by CORS: ${origin}`), false);
         },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+
+        exposedHeaders: ['Set-Cookie'],
     };
+
     app.enableCors(corsOptions);
+
     app.useGlobalPipes(new ValidationPipe());
     app.use(cookieParser());
 
@@ -51,7 +67,6 @@ async function bootstrap() {
     console.log('Database host:', process.env.DB_HOST);
     console.log('Access token name:', process.env.ACCESS_TOKEN_NAME);
 
-    // ✅ CRITICAL FIX: Add '0.0.0.0' host parameter
     await app.listen(port, '0.0.0.0');
 
     console.log(`🚀 Server running on http://0.0.0.0:${port}`);

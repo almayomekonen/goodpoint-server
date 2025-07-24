@@ -19,17 +19,21 @@ if (process.env.NODE_ENV !== 'production') {
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
-    // Configure CORS for production
+    const allowedOrigins = ['https://goodpoint-client-production.up.railway.app', process.env.CLIENT_DOMAIN];
+
     const corsOptions = {
-        origin:
-            process.env.NODE_ENV === 'production'
-                ? ['https://goodpoint-client-production.up.railway.app', process.env.CLIENT_DOMAIN]
-                : true,
+        origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+            // Allow requests with no origin (like mobile apps, curl, etc.)
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            return callback(new Error('Not allowed by CORS'), false);
+        },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
     };
-
     app.enableCors(corsOptions);
     app.useGlobalPipes(new ValidationPipe());
     app.use(cookieParser());

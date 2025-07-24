@@ -46,7 +46,11 @@ async function bootstrap() {
     console.log('Environment:', process.env.NODE_ENV);
     console.log('Database host:', process.env.DB_HOST);
     console.log('Access token name:', process.env.ACCESS_TOKEN_NAME);
-    await app.listen(port);
-    console.log(`Server running on http://localhost:${port}`);
+
+    // ✅ CRITICAL FIX: Add '0.0.0.0' host parameter
+    await app.listen(port, '0.0.0.0');
+
+    console.log(`🚀 Server running on http://0.0.0.0:${port}`);
+    console.log(`🏥 Health check: http://0.0.0.0:${port}/api/health`);
 }
 bootstrap();

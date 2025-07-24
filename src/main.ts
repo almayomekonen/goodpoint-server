@@ -23,7 +23,7 @@ async function bootstrap() {
     const corsOptions = {
         origin:
             process.env.NODE_ENV === 'production'
-                ? ['https://goodpoint-client.vercel.app', process.env.CLIENT_DOMAIN]
+                ? ['https://goodpoint-client-production.up.railway.app', process.env.CLIENT_DOMAIN]
                 : true,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

@@ -1,8 +1,15 @@
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'http';
+
+const allowedOrigins =
+    process.env.NODE_ENV === 'production'
+        ? ['https://goodpoint-client-production.up.railway.app', process.env.CLIENT_DOMAIN]
+        : '*';
+
 @WebSocketGateway({
     cors: {
-        origin: '*',
+        origin: allowedOrigins,
+        credentials: true,
     },
 })
 export class TeachersGoodPointsGateway {

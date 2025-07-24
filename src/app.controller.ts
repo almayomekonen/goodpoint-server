@@ -15,8 +15,8 @@ export class AppController {
     constructor(private readonly spamManager: SpamManagerService) {}
 
     @Get('/health')
-    getHello(): string {
-        return 'OK';
+    getHealth() {
+        return { status: 'ok' };
     }
 
     @Get('/redirect')
